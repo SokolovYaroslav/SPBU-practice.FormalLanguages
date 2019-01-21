@@ -21,14 +21,20 @@ __device__ bool is_changed;
 
 size_t matrix_memsize;
 uint32_t *tmp_matrix;
+cudaEvent_t start;
+cudaEvent_t stop;
 
 void initialize(int N_inp) {
+	int dev = findCudaDevice(argc, (const char **)argv);
+
 	N = N_inp;
 	rows = N;
 	cols = N / largest_pow2 + (N % largest_pow2 ? 1 : 0);
 	matrix_memsize = rows * cols * sizeof(uint32_t);
 
 	gpuErrchk(cudaMalloc(reinterpret_cast<void **>(&tmp_matrix), matrix_memsize));
+	gpuErrchk(cudaEventCreate(&start));
+	gpuErrchk(cudaEventCreate(&stop));
 }
 
 __global__ void DummyMulAdd(uint32_t *A, uint32_t *B, uint32_t *C, int cols) {
@@ -99,6 +105,38 @@ __global__ void AddToLeft(uint32_t *A, uint32_t *B, int cols) {
 	}
 }
 
+void wait_() {
+	cudaDeviceSynchronize();
+}
+
+gpuErrchk(cudaEventRecord(stop, NULL));
+
+// Wait for the stop event to complete
+gpuErrchk(cudaEventSynchronize(stop));
+
+float msecTotal = 0.0f;
+gpuErrchk(cudaEventElapsedTime(&msecTotal, start, stop));
+
+// Compute and print the performance
+float msecPerMatrixMul = msecTotal / nIter;
+printf("Time= %.3f msec\n", msecPerMatrixMul);
+
+
+void start_time() {
+	gpuErrchk(cudaEventRecord(start, NULL));
+}
+
+void stop_time() {
+	gpuErrchk(cudaEventRecord(stop, NULL));
+	gpuErrchk(cudaEventSynchronize(stop));
+
+	float msecTotal = 0.0f;
+	gpuErrchk(cudaEventElapsedTime(&msecTotal, start, stop));
+
+	float msecPerMatrixMul = msecTotal / nIter;
+	printf("Time= %.3f msec\n", msecPerMatrixMul);
+}
+
 void gpuMemset(uint32_t *d_M, int val) {
 	gpuErrchk(cudaMemset(d_M, val, matrix_memsize));
 }
@@ -118,11 +156,11 @@ uint32_t * host_matrix_calloc() {
 }
 
 void gpu2cpu(uint32_t *d_M, uint32_t *h_M) {
-	gpuErrchk(cudaMemcpy(h_M, d_M, matrix_memsize, cudaMemcpyDeviceToHost));
+	gpuErrchk(cudaMemcpyAsync(h_M, d_M, matrix_memsize, cudaMemcpyDeviceToHost));
 }
 
 void cpu2gpu(uint32_t *h_M, uint32_t *d_M) {
-	gpuErrchk(cudaMemcpy(d_M, h_M, matrix_memsize, cudaMemcpyHostToDevice));
+	gpuErrchk(cudaMemcpyAsync(d_M, h_M, matrix_memsize, cudaMemcpyHostToDevice));
 }
 
 void setFlag() {

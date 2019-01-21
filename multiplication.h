@@ -11,6 +11,12 @@ extern int cols;
 
 void initialize(int N_inp);
 
+void wait_();
+
+void start_time();
+
+void stop_time();
+
 uint32_t * device_matrix_alloc();
 
 uint32_t * host_matrix_calloc();

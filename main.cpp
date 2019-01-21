@@ -28,9 +28,13 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    start_time();
+
     for (int i = 0; i < reader.nonterm_count; ++i) {
         matrices[i].transfer_to_gpu();
     }
+
+    wait_();
 
     while (true) {
         bool has_changed_global = false;
@@ -52,6 +56,10 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < reader.nonterm_count; ++i) {
         matrices[i].transfer_to_cpu();
     }
+
+    wait_();
+
+    stop_time();
 
     auto out_stream = std::ofstream(argv[3], std::ofstream::out);
     for (auto& nonterm : reader.nonterm_to_int) {
