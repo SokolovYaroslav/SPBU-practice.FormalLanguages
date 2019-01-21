@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.5)
 project(SEMEN CXX CUDA)
 
 set(CMAKE_CXX_STANDART 11)
