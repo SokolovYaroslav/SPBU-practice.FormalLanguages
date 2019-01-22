@@ -63,6 +63,10 @@ __global__ void DummyMulAdd(uint32_t *A, uint32_t *B, uint32_t *C, int cols) {
 		}
 	}
 
+	if (acc == 0) {
+		return;
+	}
+
 	uint32_t c_old = C[y * cols + x];
 	if (c_old != (acc | c_old)) {
 		is_changed = true;
@@ -98,7 +102,7 @@ __global__ void DummyMul(uint32_t *A, uint32_t *B, uint32_t *C, int cols) {
 __global__ void AddToLeft(uint32_t *A, uint32_t *B, int cols) {
 	int index = blockIdx.y * cols + blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (blockIdx.x * blockDim.x + threadIdx.x >= cols) {
+    if ((blockIdx.x * blockDim.x + threadIdx.x) >= cols) {
         return;
     }
 
