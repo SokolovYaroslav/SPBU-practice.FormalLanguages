@@ -8,6 +8,7 @@
 struct Matrix {
     uint32_t *matrix_host;
     uint32_t *matrix_device;
+    bool is_changed_prev;
     bool is_changed;
 
     Matrix() {

@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     for (auto& edge : reader.edges) {
         for (int nonterm : reader.term_to_nonterm[edge.first]) {
             matrices[nonterm].put_bit(edge.second.first, edge.second.second);
-            matrices[nonterm].is_changed = true;
+            matrices[nonterm].is_changed_prev = true;
         }
     }
 
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     while (true) {
         bool has_changed_global = false;
         for (auto& prod : reader.nonterm_prods) {
-            if (matrices[prod.second.first].is_changed | matrices[prod.second.second].is_changed) {
+            if (matrices[prod.second.first].is_changed_prev | matrices[prod.second.second].is_changed_prev) {
                 bool has_changed = 
                                 MatrixMulAdd(matrices[prod.second.first].matrix_device, 
                                             matrices[prod.second.second].matrix_device, 
@@ -50,6 +50,10 @@ int main(int argc, char* argv[]) {
         }
         if (!has_changed_global) {
             break;
+        }
+        for (int i = 0; i < reader.nonterm_count; ++i) {
+            matrices[i].is_changed_prev = matrices[i].is_changed;
+            matrices[i].is_changed = false;
         }
     }
 
