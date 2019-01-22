@@ -19,8 +19,8 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 	}
 }
 
-#define largest_pow2 32
-#define threads_x 32
+#define BITS_PER_TYPE 32
+#define THREADS_PER_BLOCK 32 // More is faster if N > 5000
 
 __device__ bool is_changed;
 
@@ -36,7 +36,7 @@ void initialize(int N_inp) {
 
 	N = N_inp;
 	rows = N;
-	cols = N / largest_pow2 + (N % largest_pow2 ? 1 : 0);
+	cols = N / BITS_PER_TYPE + (N % BITS_PER_TYPE ? 1 : 0);
 	matrix_memsize = rows * cols * sizeof(uint32_t);
 
 	gpuErrchk(cudaMalloc(reinterpret_cast<void **>(&tmp_matrix), matrix_memsize));
@@ -168,8 +168,8 @@ uint8_t getFlag() {
 
 bool MatrixMulAdd(uint32_t *A, uint32_t *B, uint32_t *C) {
 	bool safe = (A == C) || (B == C);
-	dim3 mul_threads(threads_x);
-	dim3 mul_blocks(cols / threads_x + (cols % threads_x ? 1 : 0), rows);
+	dim3 mul_threads(THREADS_PER_BLOCK);
+	dim3 mul_blocks(cols / THREADS_PER_BLOCK + (cols % THREADS_PER_BLOCK ? 1 : 0), rows);
 
     setFlag();
 	if (safe) {
