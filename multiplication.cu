@@ -2,7 +2,12 @@
 #include <stdint.h>
 #include <iostream>
 #include <string>
+#include <ctime>
 #include "multiplication.h"
+
+#include <cuda_runtime.h>
+#include <helper_functions.h>
+#include <helper_cuda.h>
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -21,11 +26,13 @@ __device__ bool is_changed;
 
 size_t matrix_memsize;
 uint32_t *tmp_matrix;
-cudaEvent_t start;
-cudaEvent_t stop;
+clock_t begin;
+clock_t end;
 
 void initialize(int N_inp) {
-	int dev = findCudaDevice(argc, (const char **)argv);
+	int devID = 0;
+	devID = gpuGetMaxGflopsDeviceId();
+    checkCudaErrors(cudaSetDevice(devID));
 
 	N = N_inp;
 	rows = N;
@@ -33,8 +40,6 @@ void initialize(int N_inp) {
 	matrix_memsize = rows * cols * sizeof(uint32_t);
 
 	gpuErrchk(cudaMalloc(reinterpret_cast<void **>(&tmp_matrix), matrix_memsize));
-	gpuErrchk(cudaEventCreate(&start));
-	gpuErrchk(cudaEventCreate(&stop));
 }
 
 __global__ void DummyMulAdd(uint32_t *A, uint32_t *B, uint32_t *C, int cols) {
@@ -109,32 +114,14 @@ void wait_() {
 	cudaDeviceSynchronize();
 }
 
-gpuErrchk(cudaEventRecord(stop, NULL));
-
-// Wait for the stop event to complete
-gpuErrchk(cudaEventSynchronize(stop));
-
-float msecTotal = 0.0f;
-gpuErrchk(cudaEventElapsedTime(&msecTotal, start, stop));
-
-// Compute and print the performance
-float msecPerMatrixMul = msecTotal / nIter;
-printf("Time= %.3f msec\n", msecPerMatrixMul);
-
-
 void start_time() {
-	gpuErrchk(cudaEventRecord(start, NULL));
+	begin = clock();
 }
 
 void stop_time() {
-	gpuErrchk(cudaEventRecord(stop, NULL));
-	gpuErrchk(cudaEventSynchronize(stop));
-
-	float msecTotal = 0.0f;
-	gpuErrchk(cudaEventElapsedTime(&msecTotal, start, stop));
-
-	float msecPerMatrixMul = msecTotal / nIter;
-	printf("Time= %.3f msec\n", msecPerMatrixMul);
+	end = clock();
+	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	printf("%d\n", (int) (elapsed_secs * 1000 + 0.5));
 }
 
 void gpuMemset(uint32_t *d_M, int val) {
