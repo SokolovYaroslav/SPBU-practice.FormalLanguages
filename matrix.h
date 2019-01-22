@@ -21,11 +21,11 @@ struct Matrix {
     }
 
     void transfer_to_gpu() {
-        cpu2gpu(matrix_host, matrix_device);
+        cpu2gpu_async(matrix_host, matrix_device);
     }
 
     void transfer_to_cpu() {
-        gpu2cpu(matrix_device, matrix_host);
+        gpu2cpu_async(matrix_device, matrix_host);
     }
 
     void put_bit(int i, int j) {

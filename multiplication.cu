@@ -146,11 +146,11 @@ uint32_t * host_matrix_calloc() {
 	return M;
 }
 
-void gpu2cpu(uint32_t *d_M, uint32_t *h_M) {
+void gpu2cpu_async(uint32_t *d_M, uint32_t *h_M) {
 	gpuErrchk(cudaMemcpyAsync(h_M, d_M, matrix_memsize, cudaMemcpyDeviceToHost));
 }
 
-void cpu2gpu(uint32_t *h_M, uint32_t *d_M) {
+void cpu2gpu_async(uint32_t *h_M, uint32_t *d_M) {
 	gpuErrchk(cudaMemcpyAsync(d_M, h_M, matrix_memsize, cudaMemcpyHostToDevice));
 }
 
